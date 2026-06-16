@@ -1,0 +1,110 @@
+# Ishru Backend
+
+NestJS API for the Ishru multi-tenant event platform.
+
+## Responsibilities
+
+- Auth and admin approval flow
+- Event and guest management
+- Public guest RSVP endpoints
+- WhatsApp session management per host
+- WhatsApp message queueing per host
+- Google Contacts OAuth integration
+- Invitation email sending
+- Backend and frontend log ingestion
+
+## Requirements
+
+- Node.js 20+
+- MongoDB
+- SMTP credentials for real email delivery
+
+## Environment
+
+Create a local environment file:
+
+```bash
+copy .env.example .env
+```
+
+Important values:
+
+```env
+PORT=3000
+MONGODB_URI=mongodb://127.0.0.1:27017/ishru
+FRONTEND_ORIGIN=http://localhost:4310
+JWT_SECRET=change-this-secret
+OWNER_EMAILS=owner@example.com,second-owner@example.com
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_REDIRECT_URI=http://localhost:3000/api/google/callback
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_USER=
+SMTP_PASS=
+SMTP_FROM=Ishru <no-reply@ishru.local>
+MAIL_LOGO_URL=http://localhost:4310/brand/ishru-logo.jpeg
+LOG_LEVEL=info
+LOG_TO_DB=true
+```
+
+`OWNER_EMAILS` controls which users become super admins and who receives admin approval request emails.
+
+## Development
+
+```bash
+npm install
+npm run start:dev
+```
+
+Local API docs:
+
+```text
+http://localhost:3000/api/docs
+```
+
+## Build
+
+```bash
+npm run build
+```
+
+## Test
+
+```bash
+npm test
+```
+
+## Frontend Contract
+
+The deployed frontend origin must be configured in:
+
+```env
+FRONTEND_ORIGIN=https://your-frontend.example.com
+MAIL_LOGO_URL=https://your-frontend.example.com/brand/ishru-logo.jpeg
+```
+
+The frontend should point to this backend with:
+
+```env
+VITE_API_BASE_URL=https://your-backend.example.com/api
+```
+
+## WhatsApp QR API
+
+```http
+POST /api/whatsapp/connect
+GET /api/whatsapp/qr
+GET /api/whatsapp/status
+POST /api/whatsapp/disconnect
+Authorization: Bearer <jwt>
+```
+
+Socket.IO clients can connect to `/whatsapp-ws`, emit `watch-host` with `{ "hostId": "..." }`, and listen for `whatsapp-status`.
+
+## Multi-Host WhatsApp
+
+The backend keeps one `whatsapp-web.js` client per `hostId` in memory and stores each session independently through `RemoteAuth`.
+This supports multiple different host WhatsApp connections on one backend instance.
+
+For horizontal scaling with multiple backend instances, add distributed locking/shared state so only one instance owns a given `hostId` client.
