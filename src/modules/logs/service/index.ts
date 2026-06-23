@@ -43,7 +43,7 @@ export class AppLoggerService {
     const log = this.normalizePayload(payload);
     this.writeConsole(log);
 
-    if (this.config.get<string>('LOG_TO_DB') === 'false') {
+    if (this.config.get<string>('LOG_TO_DB') !== 'true') {
       return;
     }
 
